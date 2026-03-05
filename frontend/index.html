@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable AI | Automated Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Timetable AI</h2>
+        <div class="nav-item active" onclick="showSection('dashboard')"><span>Dashboard</span></div>
+        <div class="nav-item" onclick="showSection('input-faculty')"><span>Faculty</span></div>
+        <div class="nav-item" onclick="showSection('input-subjects')"><span>Subjects</span></div>
+        <div class="nav-item" onclick="showSection('input-rooms')"><span>Rooms</span></div>
+        <div class="nav-item" onclick="showSection('input-classes')"><span>Classes</span></div>
+        <div class="nav-item" onclick="showSection('timetable-view')"><span>View Timetable</span></div>
+        <div class="nav-item" onclick="showSection('logs')"><span>Generation Logs</span></div>
+    </div>
+
+    <div class="main-content">
+        <!-- Dashboard -->
+        <section id="dashboard">
+            <header>
+                <h1>Dashboard</h1>
+                <button class="btn btn-primary" onclick="generateTimetable()">
+                    Generate New Timetable
+                    <div id="loader" class="spinner"></div>
+                </button>
+            </header>
+            
+            <div class="dashboard-stats">
+                <div class="stat-card"><h3>Faculty</h3><p id="stat-faculty">0</p></div>
+                <div class="stat-card"><h3>Subjects</h3><p id="stat-subjects">0</p></div>
+                <div class="stat-card"><h3>Rooms</h3><p id="stat-rooms">0</p></div>
+                <div class="stat-card"><h3>Classes</h3><p id="stat-classes">0</p></div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Recent Generation Status</h3>
+                <div id="latest-status" style="margin-top: 1rem;">
+                    <p>Status: <span id="gen-status" class="badge">None</span></p>
+                    <p>Score: <span id="gen-score">0</span></p>
+                    <p>Time: <span id="gen-time">0s</span></p>
+                </div>
+            </div>
+            
+            <div id="conflict-report" class="card hidden" style="border-left: 5px solid var(--danger);">
+                <h3 style="color: var(--danger);">Conflict Report</h3>
+                <ul id="conflict-list" style="margin-top: 1rem; padding-left: 1.5rem;"></ul>
+            </div>
+        </section>
+
+        <!-- Faculty Section -->
+        <section id="input-faculty" class="hidden">
+            <header><h1>Faculty Management</h1></header>
+            <div class="card">
+                <h3>Add Faculty</h3>
+                <form id="faculty-form" class="form-grid">
+                    <div class="input-group">
+                        <label>Faculty ID</label>
+                        <input type="text" id="fac-id" required placeholder="FAC001">
+                    </div>
+                    <div class="input-group">
+                        <label>Name</label>
+                        <input type="text" id="fac-name" required placeholder="Dr. Smith">
+                    </div>
+                    <div class="input-group">
+                        <label>Subject Expertise</label>
+                        <input type="text" id="fac-expert" required placeholder="CS101, CS202">
+                    </div>
+                    <div class="input-group" style="grid-column: span 2;">
+                        <label>Weekly Working Days & Periods (Settings)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="set-days" placeholder="Days (e.g. 5)" value="5">
+                            <input type="number" id="set-periods" placeholder="Periods (e.g. 6)" value="6">
+                            <button type="button" class="btn btn-primary" onclick="updateSettings()">Save Settings</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Faculty</button>
+                </form>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>Expertise</th></tr></thead>
+                    <tbody id="faculty-list-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Subjects Section -->
+        <section id="input-subjects" class="hidden">
+            <header><h1>Subject Management</h1></header>
+            <div class="card">
+                <h3>Add Subject</h3>
+                <form id="subject-form" class="form-grid">
+                    <div class="input-group"><label>Code</label><input type="text" id="sub-code" required></div>
+                    <div class="input-group"><label>Name</label><input type="text" id="sub-name" required></div>
+                    <div class="input-group"><label>Weekly Hours</label><input type="number" id="sub-hours" required></div>
+                    <div class="input-group">
+                        <label>Type</label>
+                        <select id="sub-type"><option value="Theory">Theory</option><option value="Lab">Lab</option></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Class</label>
+                        <select id="sub-class"></select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Subject</button>
+                </form>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Code</th><th>Name</th><th>Hrs</th><th>Type</th><th>Class</th></tr></thead>
+                    <tbody id="subject-list-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Rooms Section -->
+        <section id="input-rooms" class="hidden">
+            <header><h1>Room Management</h1></header>
+            <div class="card">
+                <form id="room-form" class="form-grid">
+                    <div class="input-group"><label>Room ID</label><input type="text" id="room-id" required></div>
+                    <div class="input-group"><label>Name</label><input type="text" id="room-name" required></div>
+                    <div class="input-group"><label>Capacity</label><input type="number" id="room-cap" required></div>
+                    <div class="input-group">
+                        <label>Type</label>
+                        <select id="room-type"><option value="Theory">Theory</option><option value="Lab">Lab</option></select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Room</button>
+                </form>
+            </div>
+            <div class="card"><table id="rooms-table"><thead><tr><th>ID</th><th>Name</th><th>Cap</th><th>Type</th></tr></thead><tbody id="room-list-body"></tbody></table></div>
+        </section>
+
+        <!-- Classes Section -->
+        <section id="input-classes" class="hidden">
+            <header><h1>Class Management</h1></header>
+            <div class="card">
+                <form id="class-form" class="form-grid">
+                    <div class="input-group"><label>Class ID</label><input type="text" id="class-id" required></div>
+                    <div class="input-group"><label>Name</label><input type="text" id="class-name" required></div>
+                    <div class="input-group"><label>Strength</label><input type="number" id="class-strength" required></div>
+                    <button type="submit" class="btn btn-primary">Add Class</button>
+                </form>
+            </div>
+            <div class="card"><table><thead><tr><th>ID</th><th>Name</th><th>Strength</th></tr></thead><tbody id="class-list-body"></tbody></table></div>
+        </section>
+
+        <!-- View Timetable Section -->
+        <section id="timetable-view" class="hidden">
+            <header>
+                <h1>View Timetable</h1>
+                <button class="btn btn-primary" onclick="downloadCSV()">Download CSV</button>
+            </header>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTimetableTab('class')">Class-wise</div>
+                <div class="tab" onclick="switchTimetableTab('faculty')">Faculty-wise</div>
+                <div class="tab" onclick="switchTimetableTab('room')">Room-wise</div>
+            </div>
+            <div class="card">
+                <div class="input-group" style="max-width: 300px;">
+                    <label id="selector-label">Select Class</label>
+                    <select id="view-selector" onchange="renderTimetableGrid()"></select>
+                </div>
+                <div id="timetable-container" class="timetable-grid">
+                    <!-- Dynamic Grid -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Logs Section -->
+        <section id="logs" class="hidden">
+            <header><h1>Generation Logs</h1></header>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Timestamp</th><th>Exec Time</th><th>Score</th><th>Status</th></tr></thead>
+                    <tbody id="logs-list-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
