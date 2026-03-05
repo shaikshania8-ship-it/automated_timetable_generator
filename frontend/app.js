@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://timetable-backend-kvr7.onrender.com';
 
 let currentSection = 'dashboard';
 let currentTimetableType = 'class'; // class, faculty, room
@@ -8,7 +8,7 @@ let settings = { working_days: 5, periods_per_day: 6 };
 function showSection(sectionId) {
     document.getElementById(currentSection).classList.add('hidden');
     document.getElementById(sectionId).classList.remove('hidden');
-    
+
     // Update active nav item
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -45,7 +45,7 @@ async function loadData() {
         };
 
         settings = data.settings;
-        
+
         // Update Stats
         document.getElementById('stat-faculty').innerText = data.faculty.length;
         document.getElementById('stat-subjects').innerText = data.subjects.length;
@@ -71,7 +71,7 @@ async function loadData() {
             badge.className = `badge badge-${latest.status.toLowerCase()}`;
             document.getElementById('gen-score').innerText = latest.soft_score.toFixed(2);
             document.getElementById('gen-time').innerText = latest.execution_time.toFixed(2) + 's';
-            
+
             if (latest.status === 'Invalid') {
                 document.getElementById('conflict-report').classList.remove('hidden');
                 document.getElementById('conflict-list').innerHTML = `<li>${latest.fail_reason}</li>`;
@@ -135,7 +135,7 @@ document.getElementById('faculty-form').addEventListener('submit', async (e) => 
     for (let d = 0; d < settings.working_days; d++) {
         data.availability[d.toString()] = Array(settings.periods_per_day).fill(1);
     }
-    
+
     const res = await fetch(`${API_URL}/add-faculty`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -245,10 +245,10 @@ function switchTimetableTab(type) {
     currentTimetableType = type;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     const label = document.getElementById('selector-label');
     label.innerText = `Select ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-    
+
     // Refresh selector items
     loadData();
     renderTimetableGrid();
@@ -258,12 +258,12 @@ async function renderTimetableGrid() {
     const targetId = document.getElementById('view-selector').value;
     const container = document.getElementById('timetable-container');
     container.innerHTML = '';
-    
+
     if (!targetId) return;
-    
+
     const res = await fetch(`${API_URL}/timetable/${currentTimetableType}/${targetId}`);
     const entries = await res.json();
-    
+
     // Create Headers
     const days = ['Slot', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     for (let day = 0; day <= settings.working_days; day++) {
@@ -272,7 +272,7 @@ async function renderTimetableGrid() {
         h.innerText = days[day];
         container.appendChild(h);
     }
-    
+
     // Create Grid Body
     for (let p = 0; p < settings.periods_per_day; p++) {
         // Time label
@@ -280,13 +280,13 @@ async function renderTimetableGrid() {
         timeLabel.className = 'slot';
         timeLabel.style.background = '#e2e8f0';
         timeLabel.style.fontWeight = 'bold';
-        timeLabel.innerText = `P${p+1}`;
+        timeLabel.innerText = `P${p + 1}`;
         container.appendChild(timeLabel);
-        
+
         for (let d = 0; d < settings.working_days; d++) {
             const slot = document.createElement('div');
             slot.className = 'slot';
-            
+
             const entry = entries.find(e => e.day === d && e.period === p);
             if (entry) {
                 slot.classList.add('slot-assigned');
@@ -306,7 +306,7 @@ async function renderTimetableGrid() {
             container.appendChild(slot);
         }
     }
-    
+
     // Adjust grid columns
     container.style.gridTemplateColumns = `80px repeat(${settings.working_days}, 1fr)`;
 }
@@ -318,15 +318,15 @@ async function downloadCSV() {
         alert('Please select a view first');
         return;
     }
-    
+
     const res = await fetch(`${API_URL}/timetable/${currentTimetableType}/${targetId}`);
     const data = await res.json();
-    
+
     let csv = 'Day,Period,Subject,Faculty,Class,Room\n';
     data.forEach(e => {
         csv += `${e.day},${e.period},${e.subject_code},${e.faculty_id},${e.class_id},${e.room_id}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
